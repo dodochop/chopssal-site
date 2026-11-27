@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CHOPSSAL · 너와 나란히, 포근한 매일</title>
+<meta name="description" content="너와 나란히, 포근한 매일. 찹쌀이와 함께 쓰고 싶어서 만들기 시작한 강아지 라이프스타일 브랜드, 찹쌀 CHOPSSAL.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://images.unsplash.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="styles.css">
+<script>document.documentElement.classList.add('js')</script>
+</head>
+<body class="home">
+
+<main>
+  <!-- 첫 화면: 제품 사진이 가로로 한 줄. 누르면 그 사진이 커지고 아래에 정보가 나와요 -->
+  <section class="stage" id="products" aria-label="제품">
+    <div class="row" id="row"></div>
+
+    <div class="stage__foot">
+      <!-- 아무것도 고르지 않았을 때 -->
+      <div id="intro">
+        <small>찹쌀 CHOPSSAL</small>
+        <h1>너와 나란히,<br>포근한 매일</h1>
+      </div>
+      <p class="stage__hint" id="hint">사진을 누르면 크게 볼 수 있어요</p>
+
+      <!-- 제품을 골랐을 때 -->
+      <div id="picked" hidden>
+        <small id="picked-no"></small>
+        <h2 id="picked-name" tabindex="-1"></h2>
+      </div>
+      <div class="info" id="info" hidden>
+        <p class="info__price" id="info-price"></p>
+        <p id="info-desc"></p>
+        <div class="info__actions">
+          <button class="btn" id="info-add" type="button">장바구니에 담기</button>
+          <a id="info-link" href="shop.html">자세히 보기</a>
+          <button class="close" id="info-close" type="button">닫기</button>
+        </div>
+        <p class="said" id="info-said" role="status"></p>
+      </div>
+
+      <div class="stage__bar">
+        <span>제품 <i id="count"></i></span>
+        <a href="shop.html">전체 보기</a>
+      </div>
+    </div>
+  </section>
+
+  <div class="tint" id="story">
+    <section class="say wrap">
+      <p class="reveal">찹쌀은 하나를 만들 때마다 스스로에게 물어요.</p>
+      <blockquote class="display reveal">“이거,<br>찹쌀이한테<br>줄 수 있나?”</blockquote>
+      <p class="reveal">이 질문에 “응”이라고 답할 수 있는 것만 내놓을게요.</p>
+    </section>
+
+    <section class="story wrap">
+      <img class="reveal" src="assets/chopssal-01.jpg" alt="앞발을 살짝 들고 혀를 빼꼼 내민 하얀 강아지 찹쌀이" width="1200" height="1600" loading="lazy">
+      <div class="story__text reveal">
+        <p class="story__first">우리 집 강아지의 이름은 찹쌀이에요.</p>
+        <p>찹쌀이와 살면서 필요한 것이 하나씩 늘었어요. 가방, 옷, 리드줄. 살 때마다 같은 고민을 했어요.</p>
+        <p>마음에 드는 것은 선뜻 사기 어려운 가격이었고, 가격이 괜찮은 것은 몇 번 쓰면 아쉬운 곳이 보였어요. 좋은 품질과 부담 없는 가격, 둘 다 갖춘 것을 찾기가 왜 이렇게 어려울까 싶었어요.</p>
+        <p>그래서 직접 만들기로 했어요. 찹쌀이와 내가 매일 쓰고 싶은 것을요.</p>
+        <p class="story__sign">너와 나란히, 포근한 매일.<br>찹쌀 <span class="wordmark wordmark--sm">CHOPSSAL</span></p>
+      </div>
+    </section>
+  </div>
+
+  <section class="news wrap" id="news">
+    <h2 class="reveal">새 제품 소식은<br>인스타그램에서 먼저 전해요</h2>
+    <div class="news__actions reveal">
+      <a class="btn" href="https://www.instagram.com/hello.chopssal" target="_blank" rel="noopener">@hello.chopssal</a>
+      <a class="btn btn--plain" href="https://www.threads.net/@hello.chopssal" target="_blank" rel="noopener">스레드</a>
+    </div>
+  </section>
+</main>
+
+<script src="js/products.js"></script>
+<script src="js/layout.js"></script>
+<script>
+  const $ = id => document.getElementById(id);
+  const row = $('row');
+  let active = -1;
+
+  $('count').textContent = two(PRODUCTS.length);
+  row.innerHTML = PRODUCTS.map((p, i) =>
+    `<button class="tile" type="button" data-i="${i}" aria-pressed="false" aria-label="${p.name} 크게 보기">
+       <img src="${photoUrl(p, 900, 1140)}" alt="">
+     </button>`).join('');
+  const tiles = [...row.children];
+
+  function pick(i, focusTitle) {
+    active = i;
+    const on = i >= 0;
+    row.classList.toggle('has-active', on);
+    tiles.forEach((t, n) => t.setAttribute('aria-pressed', n === i));
+    ['intro', 'hint'].forEach(id => $(id).hidden = on);
+    ['picked', 'info'].forEach(id => $(id).hidden = !on);
+    $('info-said').textContent = '';
+    if (!on) return;
+
+    const p = PRODUCTS[i];
+    $('picked-no').textContent = `${two(i + 1)} / ${two(PRODUCTS.length)}`;
+    $('picked-name').textContent = p.name;
+    $('info-price').textContent = priceText(p);
+    $('info-desc').textContent = p.desc;
+    $('info-link').href = `product.html?id=${p.id}`;
+    $('info-add').hidden = !SHOP_OPEN;
+    $('info-add').disabled = !!p.soldout;
+    $('info-add').textContent = p.soldout ? '아직 준비하고 있어요' : '장바구니에 담기';
+    // 좁은 화면에서는 고른 사진이 가운데로 오게 옆으로 넘겨요
+    setTimeout(() => tiles[i].scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }), 350);
+    if (focusTitle) $('picked-name').focus({ preventScroll: true });
+  }
+
+  // 사진에 올리거나 초점이 가면 오른쪽 아래에 이름과 가격을 보여 줘요
+  const HINT = $('hint').textContent;
+  const hint = i => {
+    const p = PRODUCTS[i];
+    $('hint').innerHTML = p ? `${two(i + 1)}&ensp;<b>${p.name}</b>&ensp;${priceText(p)}` : HINT;
+  };
+  ['mouseover', 'focusin'].forEach(ev => row.addEventListener(ev, e => {
+    const t = e.target.closest('.tile');
+    if (t) hint(Number(t.dataset.i));
+  }));
+  ['mouseleave', 'focusout'].forEach(ev => row.addEventListener(ev, () => hint(-1)));
+
+  row.addEventListener('click', e => {
+    const t = e.target.closest('.tile');
+    if (t && Number(t.dataset.i) !== active) pick(Number(t.dataset.i), true);
+  });
+  $('info-close').addEventListener('click', () => { const was = active; pick(-1); tiles[was].focus(); });
+  $('info-add').addEventListener('click', () => {
+    Cart.add(PRODUCTS[active].id, 1);
+    $('info-said').innerHTML = '장바구니에 담았어요. <a href="cart.html">장바구니 보기</a>';
+  });
+  addEventListener('keydown', e => {
+    if (active < 0) return;
+    if (e.key === 'Escape') $('info-close').click();
+    if (e.key === 'ArrowRight') pick((active + 1) % PRODUCTS.length);
+    if (e.key === 'ArrowLeft') pick((active - 1 + PRODUCTS.length) % PRODUCTS.length);
+  });
+
+  // 화면에 들어오면 떠오르기
+  const io = new IntersectionObserver(es => es.forEach(e => {
+    if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+  }), { threshold: .15 });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+</script>
+</body>
+</html>

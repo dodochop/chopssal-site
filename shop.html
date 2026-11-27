@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>제품 · CHOPSSAL</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<main class="sec wrap">
+  <div class="sec-head">
+    <h1 class="display">제품</h1>
+    <p>찹쌀이에게 줄 수 있는 것만 만들어요.</p>
+  </div>
+  <div class="chips" id="chips" role="group" aria-label="종류 고르기"></div>
+  <div class="grid" id="grid"></div>
+</main>
+
+<script src="js/products.js"></script>
+<script src="js/layout.js"></script>
+<script>
+  const chips = document.getElementById('chips'), grid = document.getElementById('grid');
+  let cat = new URLSearchParams(location.search).get('cat');
+  if (!CATEGORIES.some(c => c.id === cat)) cat = 'all';
+
+  function draw() {
+    chips.innerHTML = [{ id: 'all', name: '전체' }, ...CATEGORIES].map(c =>
+      `<button class="chip" data-cat="${c.id}" aria-pressed="${c.id === cat}">${c.name}</button>`).join('');
+    grid.innerHTML = PRODUCTS.filter(p => cat === 'all' || p.cat === cat).map(productCard).join('');
+  }
+  chips.addEventListener('click', e => {
+    const b = e.target.closest('[data-cat]');
+    if (!b) return;
+    cat = b.dataset.cat;
+    history.replaceState(null, '', cat === 'all' ? 'shop.html' : `shop.html?cat=${cat}`);
+    draw();
+    chips.querySelector(`[data-cat="${cat}"]`).focus();
+  });
+  draw();
+</script>
+</body>
+</html>

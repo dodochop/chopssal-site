@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>장바구니 · CHOPSSAL</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<main class="sec wrap">
+  <div class="sec-head"><h1 class="display">장바구니</h1></div>
+  <div id="cart"></div>
+</main>
+
+<script src="js/products.js"></script>
+<script src="js/layout.js"></script>
+<script>
+  const box = document.getElementById('cart');
+
+  function draw() {
+    if (!SHOP_OPEN) {
+      box.innerHTML = `<div class="empty"><svg role="img" aria-label="찹쌀이 얼굴 그림"><use href="#symbol"/></svg>
+        <p>아직 준비하고 있어요. 소식은 인스타그램에서 먼저 전해요.</p><a class="btn" href="index.html">처음으로</a></div>`;
+      return;
+    }
+    const items = Object.entries(Cart.read()).map(([id, qty]) => ({ p: findProduct(id), qty })).filter(i => i.p);
+    if (!items.length) {
+      box.innerHTML = `<div class="empty"><svg role="img" aria-label="찹쌀이 얼굴 그림"><use href="#symbol"/></svg>
+        <p>장바구니가 비어 있어요.</p><a class="btn" href="shop.html">제품 보러 가기</a></div>`;
+      return;
+    }
+    const total = items.reduce((a, i) => a + i.p.price * i.qty, 0);
+    box.innerHTML = `<div class="cartpage">
+      <ul class="rows">${items.map(({ p, qty }) => `
+        <li class="rowi" data-id="${p.id}">
+          <a class="rowi__img" href="product.html?id=${p.id}" tabindex="-1" aria-hidden="true">${productImage(p, 240, 240)}</a>
+          <a class="rowi__name" href="product.html?id=${p.id}">${p.name}<i>${catName(p.cat)}</i></a>
+          <span class="rowi__price">${won(p.price * qty)}</span>
+          <div class="qty" role="group" aria-label="${p.name} 수량">
+            <button type="button" data-step="-1" aria-label="하나 빼기">−</button>
+            <output>${qty}</output>
+            <button type="button" data-step="1" aria-label="하나 더하기">+</button>
+          </div>
+          <button class="del" type="button" data-del>빼기</button>
+        </li>`).join('')}
+      </ul>
+      <aside class="sum" aria-label="주문 금액">
+        <h2>주문 금액</h2>
+        <dl>
+          <div><dt>제품</dt><dd>${won(total)}</dd></div>
+          <div><dt>배송비</dt><dd>주문할 때 계산해요</dd></div>
+          <div class="total"><dt>합계</dt><dd>${won(total)}</dd></div>
+        </dl>
+        <button class="btn" id="order">주문하기</button>
+        <p class="said" id="said" role="status"></p>
+      </aside>
+    </div>`;
+  }
+
+  box.addEventListener('click', e => {
+    const row = e.target.closest('[data-id]');
+    if (row && e.target.closest('[data-step]')) {
+      const id = row.dataset.id;
+      Cart.set(id, Math.max(1, (Cart.read()[id] || 1) + Number(e.target.closest('[data-step]').dataset.step)));
+      draw();
+    } else if (row && e.target.closest('[data-del]')) {
+      Cart.set(row.dataset.id, 0);
+      draw();
+    } else if (e.target.id === 'order') {
+      document.getElementById('said').textContent = '결제는 아직 연결하지 않았어요. 다음 단계에서 붙여요.';
+    }
+  });
+  draw();
+</script>
+</body>
+</html>

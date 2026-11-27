@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>제품 · CHOPSSAL</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://images.unsplash.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<main id="main"></main>
+
+<script src="js/products.js"></script>
+<script src="js/layout.js"></script>
+<script>
+  const main = document.getElementById('main');
+  const p = findProduct(new URLSearchParams(location.search).get('id'));
+
+  // 제품을 등록할 때 채울 칸. 지금은 비워 둔 안내만 보여요
+  const DETAILS = [
+    ['소재', '제품을 등록할 때 적어요.'],
+    ['크기와 무게', '제품을 등록할 때 적어요.'],
+    ['권하는 아이', '제품을 등록할 때 적어요.'],
+    ['세탁', '제품을 등록할 때 적어요.'],
+    ['배송과 교환', '결제를 열 때 정해서 적어요.'],
+  ];
+
+  if (!p) {
+    main.innerHTML = `<div class="wrap empty"><svg role="img" aria-label="찹쌀이 얼굴 그림"><use href="#symbol"/></svg>
+      <p>찾는 제품이 없어요. 주소가 바뀌었을 수 있어요.</p><a class="btn" href="shop.html">제품 보러 가기</a></div>`;
+  } else {
+    document.title = `${p.name} · CHOPSSAL`;
+    const no = PRODUCTS.indexOf(p);
+
+    main.innerHTML = `
+      <div class="wrap pd">
+        <div class="pd__img"><img src="${photoUrl(p, 900, 1140)}" alt="${p.name} 예시 사진"></div>
+
+        <div class="pd__info">
+          <p class="pd__no"><a href="shop.html?cat=${p.cat}">${catName(p.cat)}</a> · ${two(no + 1)} / ${two(PRODUCTS.length)}</p>
+          <h1 class="display">${p.name}</h1>
+          <p class="pd__price">${priceText(p)}</p>
+          <p>${p.desc}</p>
+
+          ${p.soldout || !SHOP_OPEN ? '' : `<div class="field">
+            <span id="qty-label">수량</span>
+            <div class="qty" role="group" aria-labelledby="qty-label">
+              <button type="button" data-step="-1" aria-label="하나 빼기">−</button>
+              <output id="qty" aria-live="polite">1</output>
+              <button type="button" data-step="1" aria-label="하나 더하기">+</button>
+            </div>
+          </div>`}
+
+          <div class="pd__actions">
+            ${p.soldout || !SHOP_OPEN
+              ? `<button class="btn" disabled>아직 준비하고 있어요</button>`
+              : `<button class="btn" id="add">장바구니에 담기</button>
+                 <button class="btn btn--plain" id="buy">바로 구매</button>`}
+          </div>
+          <p class="said" id="said" role="status"></p>
+
+          <div class="more-info">
+            ${DETAILS.map(([k, v]) => `<details><summary>${k}</summary><p>${v}</p></details>`).join('')}
+          </div>
+
+          <p class="note">우리 집 강아지의 이름은 찹쌀이에요. 좋은 품질과 부담 없는 가격을 함께 갖춘 강아지 용품을 찾기 어려워서, 찹쌀이와 매일 쓰고 싶은 것을 직접 만들기 시작했어요. 찹쌀이에게 줄 수 있는 것만 만들어요.</p>
+        </div>
+      </div>
+
+      <nav class="strip" aria-label="다른 제품">
+        ${PRODUCTS.map(q => `<a href="product.html?id=${q.id}" ${q.id === p.id ? 'aria-current="page"' : ''} aria-label="${q.name}">
+          <img src="${photoUrl(q, 900, 1140)}" alt=""></a>`).join('')}
+      </nav>`;
+
+    let qty = 1;
+    const out = document.getElementById('qty'), said = document.getElementById('said');
+    main.addEventListener('click', e => {
+      const step = e.target.closest('[data-step]');
+      if (step) { qty = Math.max(1, Math.min(99, qty + Number(step.dataset.step))); out.textContent = qty; }
+      if (e.target.id === 'add') {
+        Cart.add(p.id, qty);
+        said.innerHTML = `장바구니에 ${qty}개 담았어요. <a href="cart.html">장바구니 보기</a>`;
+      }
+      if (e.target.id === 'buy') { Cart.add(p.id, qty); location.href = 'cart.html'; }
+    });
+  }
+</script>
+</body>
+</html>

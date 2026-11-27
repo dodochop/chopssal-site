@@ -81,7 +81,7 @@
 
 <script>
   // 이 컴퓨터에서 볼 때만 확인용 사진 목록을 불러와요. 올라간 사이트에서는 아무 일도 하지 않아요
-  if (['localhost', '127.0.0.1'].includes(location.hostname)) document.write('<script src="js/preview.local.js"><\/script>');
+  if (['localhost', '127.0.0.1'].includes(location.hostname) && !location.search.includes('live')) document.write('<script src="js/preview.local.js"><\/script>');
 </script>
 <script src="js/products.js"></script>
 <script src="js/layout.js"></script>
@@ -161,7 +161,12 @@
     $('info-add').disabled = !!p.soldout;
     $('info-add').textContent = p.soldout ? '아직 준비하고 있어요' : '장바구니에 담기';
     // 좁은 화면에서는 고른 사진이 가운데로 오게 옆으로 넘겨요
-    setTimeout(() => tiles[i].scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }), 350);
+    // (줄 안에서만 옆으로 움직여요. 화면 전체가 위아래로 밀리지 않게)
+    setTimeout(() => {
+      if (active !== i || row.scrollWidth <= row.clientWidth) return;
+      const t = tiles[i].getBoundingClientRect(), r = row.getBoundingClientRect();
+      row.scrollTo({ left: row.scrollLeft + t.left - r.left - (r.width - t.width) / 2, behavior: REDUCED ? 'auto' : 'smooth' });
+    }, 680);
     setTimeout(() => { if (active === i) autoSpin(i); }, 700);   // 커진 다음에 돌아요
     if (focusTitle) $('picked-name').focus({ preventScroll: true });
   }

@@ -22,7 +22,7 @@
 
 <script>
   // 이 컴퓨터에서 볼 때만 확인용 사진 목록을 불러와요. 올라간 사이트에서는 아무 일도 하지 않아요
-  if (['localhost', '127.0.0.1'].includes(location.hostname)) document.write('<script src="js/preview.local.js"><\/script>');
+  if (['localhost', '127.0.0.1'].includes(location.hostname) && !location.search.includes('live')) document.write('<script src="js/preview.local.js"><\/script>');
 </script>
 <script src="js/products.js"></script>
 <script src="js/layout.js"></script>

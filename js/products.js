@@ -43,12 +43,22 @@ const PRODUCTS = [
     desc: '입히고 벗기기 쉬운 니트예요.' },
 ];
 
+/* 확인용 가방이 있으면(이 컴퓨터에서만) 예시 가방 자리에 대신 넣어요 */
+if (typeof LOCAL_PREVIEW !== 'undefined') {
+  const rest = PRODUCTS.filter(p => p.cat !== 'bag');
+  PRODUCTS.length = 0;
+  PRODUCTS.push(...LOCAL_PREVIEW, ...rest);
+}
+
+/* 돌려 보기: 제품에 frames: ['앞.jpg', '옆.jpg', ...] 를 넣으면 흰 배경 사진을 오려 낸 것처럼 띄우고,
+   눌렀을 때 그 사진들을 차례로 넘겨 돌아가는 것처럼 보여 줘요. 장수가 많을수록 부드러워요(24장 안팎 권장). */
+
 /* 사진 주소. w, h 는 잘라 낼 크기(픽셀) */
 function photoUrl(p, w, h) {
-  return p.image || `https://images.unsplash.com/${p.photo}?auto=format&fit=crop&w=${w}&h=${h}&q=75`;
+  return p.image || (p.frames && p.frames[0]) || `https://images.unsplash.com/${p.photo}?auto=format&fit=crop&w=${w}&h=${h}&q=75`;
 }
 function productImage(p, w = 800, h = 800) {
-  return `<img src="${photoUrl(p, w, h)}" alt="${p.name} 예시 사진">`;
+  return `<img ${p.frames ? 'class="cut" ' : ''}src="${photoUrl(p, w, h)}" alt="${p.name} 예시 사진">`;
 }
 const won = n => n.toLocaleString('ko-KR') + '원';
 const priceText = p => !SHOP_OPEN ? '준비 중' : p.soldout ? '곧 만나요' : won(p.price);

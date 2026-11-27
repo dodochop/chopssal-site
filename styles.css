@@ -99,6 +99,26 @@ body:not(.home) main { padding-top: 124px; }
 .row.has-active .tile:hover { opacity: .85; }
 .row.has-active .tile[aria-pressed="true"] { flex-grow: 8; max-width: min(50vh, 520px); height: min(64vh, 660px); opacity: 1; transform: none; cursor: default; border-radius: 22px; }
 
+/* 오려 낸 사진(흰 배경 제품 사진): 바탕 없이 제품만 떠 있게 */
+.cut { mix-blend-mode: multiply; filter: brightness(1.07) contrast(1.05); }
+/* 둥근 틀 안에서는 틀째로 바탕과 섞어야 흰 배경이 사라져요 */
+.card__img:has(.cut), .pd__img:has(.cut), .rowi__img:has(.cut), .strip a:has(.cut) { background: none; mix-blend-mode: multiply; }
+.card__img .cut, .pd__img .cut, .strip .cut { object-fit: contain; }
+.row--few { gap: clamp(20px, 6vw, 96px); }
+.row--few .tile { max-width: 200px; }
+.tile--cut { position: relative; background: none; border-radius: 0; overflow: visible; max-width: 240px; touch-action: pan-y; }
+.row--few .tile--cut { max-width: 280px; }
+.tile--cut .frame {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain;
+  mix-blend-mode: multiply; filter: brightness(1.07) contrast(1.05);
+  opacity: 0; transition: opacity .22s ease; pointer-events: none; -webkit-user-drag: none; user-select: none;
+}
+.tile--cut .frame[data-on] { opacity: 1; }
+.row.has-active .tile--cut { max-width: 150px; }
+.row.has-active .tile--cut[aria-pressed="true"] { max-width: min(72vh, 680px); border-radius: 0; cursor: grab; }
+.row.has-active .tile--cut[aria-pressed="true"]:active { cursor: grabbing; }
+.info__turn { font-size: 14px; opacity: .7; margin-top: -6px; }
+
 .stage__foot { display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 16px 40px; min-height: 148px; }
 .stage__foot > * { min-width: 0; }
 .stage__foot small { display: block; font-size: 14.5px; font-weight: 500; margin-bottom: 6px; font-variant-numeric: tabular-nums; }
@@ -244,6 +264,10 @@ button.btn { font-family: inherit; cursor: pointer; }
   .tile:hover { transform: none; }
   .row.has-active .tile { flex-basis: 18vw; max-width: none; }
   .row.has-active .tile[aria-pressed="true"] { flex: 0 0 76vw; max-width: none; height: min(56vh, 520px); }
+  .row--few { justify-content: center; gap: 12px; }
+  .row--few .tile { flex: 0 0 40vw; }
+  .tile--cut, .row--few .tile--cut, .row.has-active .tile--cut { max-width: none; }
+  .row.has-active .tile--cut[aria-pressed="true"] { max-width: none; flex: 0 0 84vw; }
   .stage__foot { grid-template-columns: 1fr; min-height: 0; }
   .stage__hint { text-align: left; }
 }
@@ -261,7 +285,7 @@ button.btn { font-family: inherit; cursor: pointer; }
 }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .btn, .card__img, .tile, .strip a { transition: none; }
+  .btn, .card__img, .tile, .tile--cut .frame, .strip a { transition: none; }
   @view-transition { navigation: none; }
   .js .reveal { opacity: 1; transform: none; transition: none; }
 }

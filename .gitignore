@@ -1,1 +1,4 @@
 .DS_Store
+# 화면 확인용으로만 쓰는 다른 회사 사진. 절대 올리지 않아요
+assets/preview/
+js/preview.local.js

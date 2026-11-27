@@ -35,6 +35,7 @@
       <div class="info" id="info" hidden>
         <p class="info__price" id="info-price"></p>
         <p id="info-desc"></p>
+        <p class="info__turn" id="info-turn" hidden>사진을 좌우로 끌면 돌려 볼 수 있어요</p>
         <div class="info__actions">
           <button class="btn" id="info-add" type="button">장바구니에 담기</button>
           <a id="info-link" href="shop.html">자세히 보기</a>
@@ -78,21 +79,68 @@
   </section>
 </main>
 
+<script>
+  // 이 컴퓨터에서 볼 때만 확인용 사진 목록을 불러와요. 올라간 사이트에서는 아무 일도 하지 않아요
+  if (['localhost', '127.0.0.1'].includes(location.hostname)) document.write('<script src="js/preview.local.js"><\/script>');
+</script>
 <script src="js/products.js"></script>
 <script src="js/layout.js"></script>
 <script>
   const $ = id => document.getElementById(id);
   const row = $('row');
+  const HOME = PRODUCTS.filter(p => p.cat === 'bag');   // 우선 홈에는 가방만
+  const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
   let active = -1;
 
   $('count').textContent = two(PRODUCTS.length);
-  row.innerHTML = PRODUCTS.map((p, i) =>
-    `<button class="tile" type="button" data-i="${i}" aria-pressed="false" aria-label="${p.name} 크게 보기">
-       <img src="${photoUrl(p, 900, 1140)}" alt="">
-     </button>`).join('');
+  row.classList.toggle('row--few', HOME.length <= 4);
+  row.innerHTML = HOME.map((p, i) => `
+    <button class="tile ${p.frames ? 'tile--cut' : ''}" type="button" data-i="${i}" aria-pressed="false" aria-label="${p.name} 크게 보기">
+      ${p.frames
+        ? p.frames.map((src, n) => `<img class="frame" src="${src}" alt="" ${n ? '' : 'data-on'}>`).join('')
+        : `<img src="${photoUrl(p, 900, 1140)}" alt="">`}
+    </button>`).join('');
   const tiles = [...row.children];
 
+  /* 돌려 보기: 사진(frames)을 차례로 넘겨요. 누르면 한 바퀴 자동으로 돌고, 그 뒤에는 좌우로 끌어서 돌려요 */
+  const spin = { timer: 0, at: 0 };
+  function showFrame(i, n) {
+    const frames = [...tiles[i].querySelectorAll('.frame')];
+    if (!frames.length) return;
+    spin.at = ((n % frames.length) + frames.length) % frames.length;
+    frames.forEach((f, k) => f.toggleAttribute('data-on', k === spin.at));
+  }
+  function stopSpin() { clearInterval(spin.timer); spin.timer = 0; }
+  function autoSpin(i) {
+    stopSpin();
+    const count = tiles[i].querySelectorAll('.frame').length;
+    if (count < 2 || REDUCED) return;
+    let step = 0;
+    // 장수가 적으면 천천히, 많으면 빠르게: 한 바퀴에 2초 안팎
+    spin.timer = setInterval(() => {
+      step++;
+      showFrame(i, step);
+      if (step >= count) stopSpin();
+    }, Math.max(60, Math.min(700, 2000 / count)));
+  }
+  let drag = null;
+  row.addEventListener('pointerdown', e => {
+    const t = e.target.closest('.tile');
+    if (!t || Number(t.dataset.i) !== active || !t.querySelector('.frame')) return;
+    stopSpin();
+    drag = { x: e.clientX, from: spin.at, count: t.querySelectorAll('.frame').length, w: t.offsetWidth };
+    t.setPointerCapture(e.pointerId);
+  });
+  row.addEventListener('pointermove', e => {
+    if (!drag) return;
+    // 사진 너비만큼 끌면 한 바퀴
+    showFrame(active, drag.from + Math.round((e.clientX - drag.x) / (drag.w / drag.count)));
+  });
+  ['pointerup', 'pointercancel'].forEach(ev => row.addEventListener(ev, () => drag = null));
+
   function pick(i, focusTitle) {
+    stopSpin();
+    if (active >= 0) showFrame(active, 0);
     active = i;
     const on = i >= 0;
     row.classList.toggle('has-active', on);
@@ -102,24 +150,26 @@
     $('info-said').textContent = '';
     if (!on) return;
 
-    const p = PRODUCTS[i];
-    $('picked-no').textContent = `${two(i + 1)} / ${two(PRODUCTS.length)}`;
+    const p = HOME[i];
+    $('picked-no').textContent = `${two(i + 1)} / ${two(HOME.length)}`;
     $('picked-name').textContent = p.name;
     $('info-price').textContent = priceText(p);
     $('info-desc').textContent = p.desc;
+    $('info-turn').hidden = !(p.frames && p.frames.length > 1);
     $('info-link').href = `product.html?id=${p.id}`;
     $('info-add').hidden = !SHOP_OPEN;
     $('info-add').disabled = !!p.soldout;
     $('info-add').textContent = p.soldout ? '아직 준비하고 있어요' : '장바구니에 담기';
     // 좁은 화면에서는 고른 사진이 가운데로 오게 옆으로 넘겨요
     setTimeout(() => tiles[i].scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }), 350);
+    setTimeout(() => { if (active === i) autoSpin(i); }, 700);   // 커진 다음에 돌아요
     if (focusTitle) $('picked-name').focus({ preventScroll: true });
   }
 
   // 사진에 올리거나 초점이 가면 오른쪽 아래에 이름과 가격을 보여 줘요
   const HINT = $('hint').textContent;
   const hint = i => {
-    const p = PRODUCTS[i];
+    const p = HOME[i];
     $('hint').innerHTML = p ? `${two(i + 1)}&ensp;<b>${p.name}</b>&ensp;${priceText(p)}` : HINT;
   };
   ['mouseover', 'focusin'].forEach(ev => row.addEventListener(ev, e => {
@@ -134,14 +184,14 @@
   });
   $('info-close').addEventListener('click', () => { const was = active; pick(-1); tiles[was].focus(); });
   $('info-add').addEventListener('click', () => {
-    Cart.add(PRODUCTS[active].id, 1);
+    Cart.add(HOME[active].id, 1);
     $('info-said').innerHTML = '장바구니에 담았어요. <a href="cart.html">장바구니 보기</a>';
   });
   addEventListener('keydown', e => {
     if (active < 0) return;
     if (e.key === 'Escape') $('info-close').click();
-    if (e.key === 'ArrowRight') pick((active + 1) % PRODUCTS.length);
-    if (e.key === 'ArrowLeft') pick((active - 1 + PRODUCTS.length) % PRODUCTS.length);
+    if (e.key === 'ArrowRight') pick((active + 1) % HOME.length);
+    if (e.key === 'ArrowLeft') pick((active - 1 + HOME.length) % HOME.length);
   });
 
   // 화면에 들어오면 떠오르기
